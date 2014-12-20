@@ -1,5 +1,6 @@
 --- Migrations ---
 --- Every migration in this file should be able to be run an arbitrary number of times
+--- This may require a table to track which migrations have been run
 
 
 CREATE OR REPLACE FUNCTION create_types ()
