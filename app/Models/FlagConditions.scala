@@ -1,7 +1,7 @@
 package models
 
 import scala.Enumeration
-import scala.slick.driver.PostgresDriver.simple._ //FIXME make imports fully qualified
+import scala.slick.driver.PostgresDriver.simple._
 import scala.slick.lifted.ProvenShape
 
 import org.joda.time.DateTime
@@ -14,7 +14,7 @@ import Writes._ //FIXME make imports fully qualified
 
 
 
-case class FlagCondition(color: FlagColor.Value, since: DateTime, wind: WindCondition)
+case class FlagCondition(color: FlagColor.Value, since: DateTime, wind: WindCondition, id: Option[Int] = None)
 case class WindCondition(speed: Double, direction: WindDirection.Value)
 
 //    object FlagCondition extends Table
@@ -56,7 +56,7 @@ object FlagConditionJsonWrites {
         (JsPath \ "color").write[FlagColor.Value] and
         (JsPath \ "since").write[DateTime] and
         (JsPath \ "wind").write[WindCondition]
-    )(unlift(FlagCondition.unapply))
+    )(unlift({ fc: FlagCondition => Some(fc.color, fc.since, fc.wind) }))
 }
 
 object ColumnTypeImplicits {
@@ -76,14 +76,21 @@ object ColumnTypeImplicits {
 
 import ColumnTypeImplicits._
 
-class FlagConditionsTable(tag: Tag) extends Table[(Int, DateTime, FlagColor.Value, Double, WindDirection.Value)](tag, "conditions") {
-    def conditionId: Column[Int] = column[Int]("condition_id", O.PrimaryKey)
+class FlagConditionsTable(tag: Tag) extends Table[FlagCondition](tag, "conditions") {
+    def conditionId: Column[Int] = column[Int]("condition_id", O.PrimaryKey, O.AutoInc)
     def recordedDateTime: Column[DateTime] = column[DateTime]("recorded_datetime")
-    def currentColor: Column[FlagColor.Value] = column[FlagColor.Value]("flag_color")
+    def currentColor: Column[FlagColor.Value] = column[FlagColor.Value]("current_color")
     def windSpeed: Column[Double] = column[Double]("wind_speed")
     def windDirection: Column[WindDirection.Value] = column[WindDirection.Value]("wind_direction")
 
-    def * : ProvenShape[(Int, DateTime, FlagColor.Value, Double, WindDirection.Value)] =
-        (conditionId, recordedDateTime, currentColor, windSpeed, windDirection)
+    def * : ProvenShape[FlagCondition] = {
+        (recordedDateTime, currentColor, windSpeed, windDirection, conditionId.?) <>
+        (
+            { tup: (DateTime, FlagColor.Value, Double, WindDirection.Value, Option[Int]) =>
+                FlagCondition(tup._2, tup._1, WindCondition(tup._3, tup._4), tup._5) },
+            { fc: FlagCondition  => Some((fc.since, fc.color, fc.wind.speed, fc.wind.direction, fc.id)) }
+        )
+
+    }
 }
 
