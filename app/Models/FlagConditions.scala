@@ -1,18 +1,18 @@
 package models
 
 import scala.Enumeration
-import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.lifted.ProvenShape
 
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import play.api.mvc.{Action, Controller}
-import play.api.mvc.BodyParsers.parse
-import play.api.Logger
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 import play.api.libs.json.{JsPath, JsValue, JsString, Json, Writes}
-import scala.slick.jdbc.GetResult
+import play.api.Logger
+import play.api.mvc.BodyParsers.parse
+import play.api.mvc.{Action, Controller}
+import scala.slick.driver.PostgresDriver.simple._
+import scala.slick.lifted.ProvenShape
+
 import Writes._ //FIXME make imports fully qualified
 
 
@@ -49,6 +49,7 @@ object FlagConditionJsonWrites {
         def writes(enum: FlagColor.Value): JsValue = JsString(enum.toString)
     }
 
+    //FIXME this is ineffective
     implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
         def writes(date: DateTime): JsValue = JsString(ISODateTimeFormat.basicDateTimeNoMillis.print(date))
     }
@@ -82,19 +83,6 @@ object ColumnTypeImplicits {
         { d => new java.sql.Timestamp(d.getMillis) },
         { ts => new DateTime(ts) }
     )
-
-    implicit val getFlagResult =
-        GetResult({r =>
-            FlagCondition(
-                FlagColor.withName(r.rs.getString(3)),
-                new DateTime(r.rs.getTimestamp(2)),
-                WindCondition(
-                    r.rs.getDouble(4),
-                    WindDirection.withName(r.rs.getString(5))
-                ),
-                Some(r.rs.getInt(1))
-            )
-        })
 }
 
 import ColumnTypeImplicits._

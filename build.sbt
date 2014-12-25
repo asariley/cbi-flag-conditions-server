@@ -1,4 +1,4 @@
-name := """cbi-flag-status"""
+name := """cbi-flag-conditions"""
 
 version := "1.0-SNAPSHOT"
 
