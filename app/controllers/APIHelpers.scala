@@ -17,16 +17,6 @@ case class Logging[A](action: Action[A]) extends Action[A] {
   lazy val parser = action.parser
 }
 
-/* Let's do this once I have something working that I can revert to if it fails
-case class Interchange[A](action: Action[A]) extends Action[A] {
-
-  def apply(request: Request[A]): Future[Result] = {
-    action(request)
-  }
-
-  lazy val parser = BodyParsers.parse.json
-}*/
-
 object ApiAction extends ActionBuilder[Request] {
   def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
     block(request)
