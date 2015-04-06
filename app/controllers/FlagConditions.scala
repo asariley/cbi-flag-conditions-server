@@ -30,7 +30,7 @@ object FlagConditions extends Controller {
             DB.withSession { implicit rs =>
                 //Slick doesn't really support dates in filter statements so we use a non-typesafe query
                 val today: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(LocalDate.now())
-                Ok(Json.toJson(FlagConditionHistory(sql"SELECT * FROM conditions WHERE recorded_datetime > '#$today'".as[FlagCondition].list)))
+                Ok(Json.toJson(FlagConditionHistory(sql"SELECT * FROM condition WHERE recorded_datetime > '#$today'".as[FlagCondition].list)))
             }
         }
 

@@ -35,6 +35,13 @@ object WindDirection extends Enumeration {
     val NORTHWEST = Value("NORTHWEST")
 }
 
+object SkyCondition extends Enumeration {
+    val SUNNY  = Value("SUN")
+    val CLOUDY = Value("OVERCAST")
+    val RAIN   = Value("RAIN")
+    val TSTORM = Value("THUNDERSTORM")
+}
+
 case class WindCondition(speed: Double, direction: WindDirection.Value)
 object WindCondition {
     implicit val windEnumerationWrites: Writes[WindDirection.Value] = new Writes[WindDirection.Value] {
@@ -45,24 +52,39 @@ object WindCondition {
 }
 
 object FlagConditionJsonWrites {
-   implicit val flagEnumerationWrites: Writes[FlagColor.Value] = new Writes[FlagColor.Value] {
+    implicit val flagEnumerationWrites: Writes[FlagColor.Value] = new Writes[FlagColor.Value] {
         def writes(enum: FlagColor.Value): JsValue = JsString(enum.toString)
     }
 
-    //FIXME this is ineffective
+    //FIXME this is ineffective ??
     implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
         def writes(date: DateTime): JsValue = JsString(ISODateTimeFormat.basicDateTimeNoMillis.print(date))
+    }
+
+    implicit val skyConditionEnumerationWrites: Writes[SkyCondition.Value] = new Writes[SkyCondition.Value] {
+        def writes(enum: SkyCondition.Value): JsValue = JsString(enum.toString)
     }
 
     implicit val flagConditionWrites: Writes[FlagCondition] = (
         (JsPath \ "color").write[FlagColor.Value] and
         (JsPath \ "since").write[DateTime] and
-        (JsPath \ "wind").write[WindCondition]
-    )(unlift({ fc: FlagCondition => Some(fc.color, fc.since, fc.wind) }))
+        (JsPath \ "wind").write[WindCondition] and
+        (JsPath \ "sunset").write[DateTime] and
+        (JsPath \ "sky").write[SkyCondition.Value] and
+        (JsPath \ "tempF").write[Double]
+    )(unlift({ fc: FlagCondition => Some(fc.color, fc.since, fc.wind, fc.sunset, fc.sky, fc.tempF) }))
 }
 
 //We do this manually to not expose the id
-case class FlagCondition(color: FlagColor.Value, since: DateTime, wind: WindCondition, id: Option[Int] = None)
+case class FlagCondition (
+    color: FlagColor.Value,
+    since: DateTime,
+    wind: WindCondition,
+    sunset: DateTime,
+    sky: SkyCondition.Value,
+    tempF: Double,
+    id: Option[Int] = None
+)
 
 case class FlagConditionHistory(conditions: List[FlagCondition])
 object FlagConditionHistory {
@@ -83,23 +105,51 @@ object ColumnTypeImplicits {
         { d => new java.sql.Timestamp(d.getMillis) },
         { ts => new DateTime(ts) }
     )
+
+    implicit val skyConditionColumnType = MappedColumnType.base[SkyCondition.Value, String](
+        { sc => sc.toString },
+        { SkyCondition.withName }
+    )
 }
 
 import ColumnTypeImplicits._
 
-class FlagConditionsTable(tag: Tag) extends Table[FlagCondition](tag, "conditions") {
+class FlagConditionsTable(tag: Tag) extends Table[FlagCondition](tag, "condition") {
     def conditionId: Column[Int] = column[Int]("condition_id", O.PrimaryKey, O.AutoInc)
-    def recordedDateTime: Column[DateTime] = column[DateTime]("recorded_datetime")
-    def currentColor: Column[FlagColor.Value] = column[FlagColor.Value]("current_color")
-    def windSpeed: Column[Double] = column[Double]("wind_speed")
-    def windDirection: Column[WindDirection.Value] = column[WindDirection.Value]("wind_direction")
+    def recordedDateTime: Column[DateTime] = column[DateTime]("recorded_datetime", O.NotNull)
+    def currentColor: Column[FlagColor.Value] = column[FlagColor.Value]("current_color", O.NotNull)
+    def windSpeed: Column[Double] = column[Double]("wind_speed", O.NotNull)
+    def windDirection: Column[WindDirection.Value] = column[WindDirection.Value]("wind_direction", O.NotNull)
+    def sunset: Column[DateTime] = column[DateTime]("sunset", O.NotNull)
+    def skyCondition: Column[SkyCondition.Value] = column[SkyCondition.Value]("sky_condition", O.NotNull)
+    def temperatureFarenheit: Column[Double] = column[Double]("temperature_farenheit", O.NotNull)
 
     def * : ProvenShape[FlagCondition] = {
-        (recordedDateTime, currentColor, windSpeed, windDirection, conditionId.?) <>
+        (recordedDateTime, currentColor, windSpeed, windDirection, sunset, skyCondition, temperatureFarenheit, conditionId.?) <>
         (
-            { tup: (DateTime, FlagColor.Value, Double, WindDirection.Value, Option[Int]) =>
-                FlagCondition(tup._2, tup._1, WindCondition(tup._3, tup._4), tup._5) },
-            { fc: FlagCondition  => Some((fc.since, fc.color, fc.wind.speed, fc.wind.direction, fc.id)) }
+            { tup: (DateTime, FlagColor.Value, Double, WindDirection.Value, DateTime, SkyCondition.Value, Double, Option[Int]) =>
+                FlagCondition(
+                    color = tup._2,
+                    since = tup._1,
+                    wind = WindCondition(tup._3, tup._4),
+                    sunset = tup._5,
+                    sky = tup._6,
+                    tempF = tup._7,
+                    id = tup._8
+                )
+            },
+            { fc: FlagCondition  =>
+                Some((
+                    fc.since,
+                    fc.color,
+                    fc.wind.speed,
+                    fc.wind.direction,
+                    fc.sunset,
+                    fc.sky,
+                    fc.tempF,
+                    fc.id
+                ))
+            }
         )
     }
 }

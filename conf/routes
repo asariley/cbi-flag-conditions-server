@@ -12,6 +12,9 @@ GET     /assets/*file                    controllers.Assets.at(path="/public", f
 GET /api/v1/conditions/current           controllers.FlagConditions.current
 GET /api/v1/conditions/history           controllers.FlagConditions.history
 
+GET  /api/v1/notifications/prefs/:device controllers.Notifications.getPreferences(device: String)
+POST /api/v1/notifications/prefs/:device controllers.Notifications.setPreferences(device: String)
+
 POST /api/v1/lfg/requests                controllers.LookingForGroup.newRequest
 GET  /api/v1/lfg/requests                controllers.LookingForGroup.getRequests
 POST /api/v1/lfg/responses/:id           controllers.LookingForGroup.respondToRequest(id: Long)
