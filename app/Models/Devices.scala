@@ -9,8 +9,6 @@ import scala.slick.lifted.ProvenShape
 import play.api.libs.json.{Json, Reads}
 
 
-//FIXME need to make device table and join to it somehow
-
 case class Device (
     deviceIdentifier: String
 )

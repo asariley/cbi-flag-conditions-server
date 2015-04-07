@@ -56,7 +56,6 @@ object FlagConditionJsonWrites {
         def writes(enum: FlagColor.Value): JsValue = JsString(enum.toString)
     }
 
-    //FIXME this is ineffective ??
     implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
         def writes(date: DateTime): JsValue = JsString(ISODateTimeFormat.basicDateTimeNoMillis.print(date))
     }
