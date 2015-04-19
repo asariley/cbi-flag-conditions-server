@@ -11,8 +11,8 @@ import play.api.mvc.BodyParsers.parse
 import play.api.mvc.{Action, Controller, Result}
 import play.api.Play.{current => implicitRunningApp}
 import scala.slick.driver.PostgresDriver.simple.{queryToAppliedQueryInvoker}
-import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.JdbcBackend.Session
+import scala.slick.jdbc.StaticQuery.interpolation
 
 import models.{NotificationPref, Device, QueryHelpers}
 

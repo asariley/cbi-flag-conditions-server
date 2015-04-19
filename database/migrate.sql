@@ -40,7 +40,7 @@ BEGIN;
         current_color flag_color NOT NULL,
         wind_speed real NOT NULL,
         wind_direction wind_direction NOT NULL,
-        sunset timestamp NOT NULL,
+        sunset varchar(5) NOT NULL,
         sky_condition sky_condition NOT NULL,
         temperature_farenheit real NOT NULL
     );
