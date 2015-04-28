@@ -12,7 +12,7 @@ import play.api.mvc.BodyParsers.parse
 import scala.slick.driver.PostgresDriver.simple._ //FIXME make imports fully qualified
 import scala.slick.lifted.ProvenShape
 
-import Writes._ //FIXME make imports fully qualified
+import Writes.DoubleWrites
 
 
 object FlagColor extends Enumeration {
@@ -55,7 +55,7 @@ object FlagConditionJsonWrites {
     }
 
     implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
-        def writes(date: DateTime): JsValue = JsString(ISODateTimeFormat.basicDateTimeNoMillis.print(date))
+        def writes(date: DateTime): JsValue = JsString(ISODateTimeFormat.dateTimeNoMillis.print(date))
     }
 
     implicit val jodaLocalTimeWrites: Writes[LocalTime] = new Writes[LocalTime] {

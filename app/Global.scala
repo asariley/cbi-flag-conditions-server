@@ -21,7 +21,9 @@ object Global extends play.api.GlobalSettings {
     var weatherReporter: Option[ActorRef] = None
 
     private def debugOnChange(oldFcOpt: Option[FlagCondition], newFcOpt: Option[FlagCondition]): Unit = {
-        Logger.debug(s"old: $oldFcOpt new: $newFcOpt")
+        if (oldFcOpt.map(_.color) != newFcOpt.map(_.color)) {
+            Logger.info(s"old: $oldFcOpt new: $newFcOpt")
+        }
     }
 
 

@@ -6,7 +6,7 @@ import play.api.libs.json._
 import play.api.libs.json.{Json, Format}
 
 
-import Writes._ //FIXME make imports fully qualified
+import Writes.{BooleanWrites, StringWrites}
 
 case class NotificationPref (
     address: String,
