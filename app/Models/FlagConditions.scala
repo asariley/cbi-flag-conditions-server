@@ -3,17 +3,46 @@ package models
 import scala.Enumeration
 
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
-import org.joda.time.{DateTime, LocalTime}
+import org.joda.time.{DateTime, LocalTime, LocalDate}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.libs.json.{JsPath, JsValue, JsString, Json, Writes}
 import play.api.Logger
 import play.api.mvc.BodyParsers.parse
 import scala.slick.driver.PostgresDriver.simple._ //FIXME make imports fully qualified
+import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.lifted.ProvenShape
+import scala.slick.jdbc.GetResult
 
 import Writes.DoubleWrites
 
+/** Convenience 'Get stuff' operations */
+object FlagCondition {
+    val table: TableQuery[FlagConditionsTable] = TableQuery[FlagConditionsTable]
+
+    /* Used for converting static query results to case classes */
+    implicit val getFlagResult: GetResult[FlagCondition] =
+        GetResult({r =>
+            FlagCondition(
+                FlagColor.withName(r.rs.getString(3)),
+                new DateTime(r.rs.getTimestamp(2)),
+                WindCondition(
+                    r.rs.getDouble(4),
+                    WindDirection.withName(r.rs.getString(5))
+                ),
+                DateTimeFormat.forPattern("HH:mm").parseLocalTime(r.rs.getString(6)),
+                SkyCondition.withName(r.rs.getString(7)),
+                r.rs.getDouble(8),
+                Some(r.rs.getInt(1))
+            )
+        })
+
+    def todaysConditions(implicit session: Session): FlagConditionHistory = {
+        //Slick doesn't really support dates in filter statements so we use a non-typesafe query
+        val today: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(LocalDate.now())
+        FlagConditionHistory(sql"SELECT * FROM condition WHERE recorded_datetime > '#$today'".as[FlagCondition].list)
+    }
+}
 
 object FlagColor extends Enumeration {
     val CLOSED = Value("CLOSED")

@@ -126,7 +126,7 @@ class WeatherReporter(configuration: Configuration, onChange: (Option[FlagCondit
     /** Go to DB and get latest Flag Condition and compare them. Insert the new flag condtion into the database */
     private def reportAndRecordNewCondition(newCondition: FlagCondition): Unit = {
         val lastCondition: Option[FlagCondition] = DB.withSession { implicit rs =>
-            val lc = QueryHelpers.conditions.sortBy(_.recordedDateTime.desc).firstOption
+            val lc = FlagCondition.table.sortBy(_.recordedDateTime.desc).firstOption
             //QueryHelpers.conditions += newCondition
             sqlu"""
                 INSERT INTO condition (recorded_datetime, current_color, wind_speed, wind_direction, sunset, sky_condition, temperature_farenheit)
@@ -149,7 +149,7 @@ class WeatherReporter(configuration: Configuration, onChange: (Option[FlagCondit
     /** Get latest flag condition, update it with the new flag color and pass both versions as arguments to the supplied function*/
     private def reportAndRecordNewFlag(newFlagColor: FlagColor.Value): Unit = {
         val lastCondition = DB.withTransaction { implicit rs =>
-            val lcOpt = QueryHelpers.conditions.sortBy(_.recordedDateTime.desc).firstOption
+            val lcOpt = FlagCondition.table.sortBy(_.recordedDateTime.desc).firstOption
             lcOpt.foreach { lc =>
                 /*val statement = QueryHelpers.conditions.filter(_.conditionId === lc.id.get).map(t => (t.recordedDateTime, t.currentColor))
                 val numRows = statement.update((TimeHelpers.now, newFlagColor))*/
