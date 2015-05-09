@@ -10,6 +10,8 @@ import play.api.mvc.RequestHeader
 import play.api.mvc.Results.{InternalServerError, NotFound, NoContent}
 import utils.actors.{WeatherReporter, FlagReport, FullReport}
 
+import utils.pushnotification.PushService
+
 import models.FlagCondition
 
 
@@ -39,6 +41,7 @@ object Global extends play.api.GlobalSettings {
         flagReportJob = Some(Akka.system.scheduler.schedule(30.second, 1.minute, wr, FlagReport))
 
         //Start Push Service
+        PushService.start()
     }
 
     override def onStop(app: play.api.Application) {
