@@ -45,7 +45,7 @@ class WeatherReporter(configuration: Configuration, onChange: (Option[FlagCondit
                 case Failure(t) => Logger.error(s"Full report failed: $t")
             }
         case FlagReport if CbiHours.isCbiOpen => requestFlagColor.map(reportAndRecordNewFlag) onComplete {
-                case Success(_) => Logger.info("Scheduled flag report completed successfully")
+                case Success(_) => Logger.debug("Scheduled flag report completed successfully")
                 case Failure(t) => Logger.error(s"Flag report failed: $t")
             }
         case FullReport | FlagReport => () //Don't invest the time if we know we don't care about the data
